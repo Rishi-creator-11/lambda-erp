@@ -1,3 +1,25 @@
+# Inventory Ops Copilot (adapted fork of Lambda ERP)
+
+> **Fork of [lambdadevelopment/lambda-erp](https://github.com/lambdadevelopment/lambda-erp)** (Apache-2.0). Upstream commit adapted from: `d12e22063970c22801ac81f5457f5e09c80d8c93`.
+> LICENSE is unchanged. This repository has no upstream NOTICE file. Modified/added files are listed in [MODIFICATIONS.md](MODIFICATIONS.md) and marked `Modified` in-file.
+> The upstream dashboard, document workflows, ledgers, auth and chat are unchanged; the work below is a deployment plugin on top.
+
+## What I added
+
+- **Approval-gated low-stock reorder** (`inventory_ops/`, loaded with `LAMBDA_ERP_PLUGINS=inventory_ops`): reads stock `Bin` + open Purchase Orders against a reorder policy, proposes a draft reorder (quantities rounded to pack size + a per-line justification), and writes only after an explicit `confirm=true`.
+- **Duplicate-confirmation protection**: an atomic `proposed -> confirming` claim means one proposal confirms once; a second attempt returns 409 with the original order reference. Stale proposals (stock changed) are refused.
+- **Audit events** (`Reorder Audit Event`): proposed, confirmed, denied (role / unauthenticated / duplicate / cap), plus a `Purchase Order:after_submit` hook so every PO submission is logged.
+- **Reuses upstream authorization and mutation paths**: real writes are a registered action (`confirm_reorder`, manager+; viewers and the shared demo account are refused by upstream's gate) that creates and submits Purchase Orders via `services.create_document` / `submit_document`, so document lifecycle hooks fire. Also exposed to chat and MCP automatically.
+- **Public sandbox** (`/inventory-ops`): anonymous visitors get a session-scoped sandbox that never writes shared ERP data; caps per session and per hour. Upstream's own public-demo mode (`LAMBDA_ERP_ENABLE_PUBLIC_DEMO`) makes every visitor a shared writer on one DB, so it is **disabled** here.
+- **Original synthetic dataset** (`inventory_ops/seed.py`): fictional "Meridian Print & Pack": 8 print-supply items, 3 suppliers, one open PO. Seeded deterministically at boot instead of the 3-minute random simulation.
+- Tests: `python -m tests.test_inventory_ops` (new). Upstream `test_erp_validation`, `test_registered_actions`, `test_tool_permissions`, `test_plugin_schema`, `test_security_regressions` still pass.
+
+Env (names only): `LAMBDA_ERP_PLUGINS`, `INVENTORY_OPS_SEED`, `INVENTORY_OPS_SANDBOX_ORDERS_PER_SESSION`, `INVENTORY_OPS_SANDBOX_ORDERS_PER_HOUR`, `INVENTORY_OPS_SANDBOX_PROPOSALS_PER_SESSION`, optional `OPENAI_API_KEY` (chat), `LAMBDA_ERP_ADMIN_*` (admin seed), `JWT_SECRET_KEY`.
+
+---
+
+# Upstream README
+
 # Lambda ERP
 
 **Open-source ERP you can run through chat — configurable in plain language**

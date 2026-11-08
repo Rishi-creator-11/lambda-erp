@@ -23,6 +23,7 @@ import Chat from "@/pages/chat";
 import ConnectAuthorize from "@/pages/connect-authorize";
 import Login from "@/pages/login";
 import Demo from "@/pages/demo";
+import InventoryOps from "@/pages/inventory-ops";
 import MentionsDemo from "@/pages/mentions-demo";
 import OpeningBalances from "@/pages/opening-balances";
 import BankStatementImport from "@/pages/bank-statement-import";
@@ -46,6 +47,7 @@ const baseTopRoutes: RouteObject[] = [
   { path: "/connect/authorize", element: <ConnectAuthorize /> },
   { path: "/login", element: <Login /> },
   { path: "/demo", element: <Demo /> },
+  { path: "/inventory-ops", element: <InventoryOps /> },
   { path: "/demo/mentions", element: <MentionsDemo /> },
 ];
 

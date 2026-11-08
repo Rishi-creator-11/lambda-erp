@@ -63,6 +63,7 @@ RUN pip install --no-cache-dir .
 
 # Application code + built frontend.
 COPY api ./api
+COPY inventory_ops ./inventory_ops
 COPY --from=frontend-build /build/dist ./frontend/dist
 
 # Writable paths — /data is the intended volume mount for persisted SQLite.
@@ -73,7 +74,9 @@ RUN mkdir -p /data /app/uploads \
 USER app
 
 ENV LAMBDA_ERP_DB=/data/lambda_erp.db \
-    LAMBDA_ERP_AUTO_DEMO=1 \
+    LAMBDA_ERP_AUTO_DEMO=0 \
+    LAMBDA_ERP_PLUGINS=inventory_ops \
+    INVENTORY_OPS_SEED=1 \
     PORT=8000 \
     PYTHONUNBUFFERED=1
 

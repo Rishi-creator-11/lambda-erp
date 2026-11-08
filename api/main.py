@@ -91,6 +91,15 @@ async def lifespan(app: FastAPI):
         from api.auth import ensure_seed_admin
         ensure_seed_admin()
 
+        # Modified (Inventory Ops Copilot): deterministic print-supply seed instead of the
+        # random 3-year simulation, plus open viewer sign-up so reviewers can browse read-only.
+        if os.environ.get("INVENTORY_OPS_SEED") == "1":
+            from inventory_ops.seed import seed as seed_print_supply
+
+            seed_print_supply()
+            db.sql('INSERT OR IGNORE INTO "Settings" (key, value) VALUES (?, ?)', ["allow_public_signup", "1"]) if db.dialect == "sqlite" else None
+            db.conn.commit()
+
         # When packaged as a demo container, land visitors straight in demo mode.
         if os.environ.get("LAMBDA_ERP_AUTO_DEMO") == "1":
             from api.bootstrap import bootstrap_demo
@@ -144,6 +153,11 @@ app.include_router(admin.router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(chat_api.router, prefix="/api")
 app.include_router(mcp.router, prefix="/api")
+# Modified (Inventory Ops Copilot): mount the plugin's public sandbox router when the plugin is enabled.
+if "inventory_ops" in os.environ.get("LAMBDA_ERP_PLUGINS", ""):
+    from inventory_ops.router import router as inventory_ops_router
+
+    app.include_router(inventory_ops_router, prefix="/api")
 
 
 @app.get("/api/health")
